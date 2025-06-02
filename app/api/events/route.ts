@@ -98,14 +98,12 @@ export async function POST(request: Request) {
     const { title, start, end, allDay, description } = body;
 
     if (!title || !start || !end) {
-      console.log("Missing required fields");
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    console.log("Creating event for user:", userId);
     const event = await prisma.event.create({
       data: {
         title,

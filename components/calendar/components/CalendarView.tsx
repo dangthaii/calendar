@@ -8,6 +8,8 @@ import { useEvents } from "@/lib/hooks/useEvents";
 import { formatEventsForCalendar } from "../utils/formatEvents";
 import { EventModal } from "./EventModal";
 import { config } from "../constants";
+import "../styles.css";
+import { Clock, User } from "lucide-react";
 
 export const CalendarView = ({
   userId,
@@ -109,11 +111,27 @@ export const CalendarView = ({
         eventClick={handleEventClick}
         select={handleSelectRange}
         eventContent={(eventInfo) => {
+          const isCurrentUser = eventInfo.event.extendedProps.isCurrentUser;
           return (
             <div className="fc-event-main-content">
-              <div className="event-title">{eventInfo.event.title}</div>
-              <div className="event-user">
-                {eventInfo.event.extendedProps.userName}
+              <div className="event-title font-medium truncate">
+                {eventInfo.event.title}
+              </div>
+
+              <div className="event-details flex flex-col gap-1 mt-1">
+                {eventInfo.timeText && (
+                  <div className="event-time text-xs flex items-center gap-1">
+                    <Clock size={12} className="inline-block" />
+                    <span>{eventInfo.timeText}</span>
+                  </div>
+                )}
+
+                <div className="event-user text-xs flex items-center gap-1">
+                  <User size={12} className="inline-block" />
+                  <span className="truncate">
+                    {eventInfo.event.extendedProps.userName}
+                  </span>
+                </div>
               </div>
             </div>
           );

@@ -1,0 +1,87 @@
+/* Dashboard styles */
+.calendar-wrapper {
+  min-height: calc(100vh - 120px);
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .calendar-wrapper {
+    min-height: calc(100vh - 150px);
+  }
+}
+
+/* Override fullcalendar styles for better mobile experience */
+@media (max-width: 768px) {
+  .fc .fc-toolbar.fc-header-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .fc .fc-toolbar-title {
+    font-size: 1rem;
+  }
+}
+
+/* Add some padding to the container */
+.container {
+  max-width: 1400px;
+}
+
+/* Make the calendar fill the available space */
+.fc {
+  height: 100%;
+  min-height: 600px;
+}
+
+/* Style the header */
+.fc-header-toolbar {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--fc-border-color);
+}
+
+/* Improve event styling - outline style */
+.fc-event {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.1s ease-in-out;
+  background-color: #ffffff !important;
+  border: 1px solid var(--fc-event-border-color);
+  border-left-width: 4px;
+}
+
+.fc-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Event details with icons */
+.event-details {
+  margin-top: 4px;
+}
+
+.event-time, .event-user {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.event-time svg, .event-user svg {
+  flex-shrink: 0;
+}
+
+/* Improve the time slots */
+.fc-timegrid-slot {
+  border-bottom: 1px solid var(--fc-border-color);
+}
+
+/* Custom styling for the current time indicator */
+.fc .fc-timegrid-now-indicator-line {
+  border-color: #0ea5e9;
+  border-width: 1px;
+}
+
+/* Hide the arrow indicator */
+.fc .fc-timegrid-now-indicator-arrow {
+  display: none;
+} 

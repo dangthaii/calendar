@@ -36,17 +36,29 @@ export const EventModal = ({
     setCurrentEvent({ ...currentEvent, allDay: checked });
   };
 
+  // Format datetime for input fields
+  const formatDateTimeForInput = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    // Check if date is valid
+    if (isNaN(date.getTime())) return "";
+    return date.toISOString().slice(0, 16);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-xl font-semibold text-gray-900">
             {isEditMode ? "Edit Event" : "Create Event"}
           </DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-5 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="title" className="text-right">
+            <Label
+              htmlFor="title"
+              className="text-right text-sm font-medium text-gray-700"
+            >
               Title
             </Label>
             <Input
@@ -55,44 +67,46 @@ export const EventModal = ({
               value={currentEvent.title || ""}
               onChange={handleInputChange}
               className="col-span-3"
+              placeholder="Event title"
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="start" className="text-right">
+            <Label
+              htmlFor="start"
+              className="text-right text-sm font-medium text-gray-700"
+            >
               Start
             </Label>
             <Input
               id="start"
               name="start"
               type="datetime-local"
-              value={
-                currentEvent.start
-                  ? new Date(currentEvent.start).toISOString().slice(0, 16)
-                  : ""
-              }
+              value={formatDateTimeForInput(currentEvent.start || "")}
               onChange={handleInputChange}
               className="col-span-3"
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="end" className="text-right">
+            <Label
+              htmlFor="end"
+              className="text-right text-sm font-medium text-gray-700"
+            >
               End
             </Label>
             <Input
               id="end"
               name="end"
               type="datetime-local"
-              value={
-                currentEvent.end
-                  ? new Date(currentEvent.end).toISOString().slice(0, 16)
-                  : ""
-              }
+              value={formatDateTimeForInput(currentEvent.end || "")}
               onChange={handleInputChange}
               className="col-span-3"
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="allDay" className="text-right">
+            <Label
+              htmlFor="allDay"
+              className="text-right text-sm font-medium text-gray-700"
+            >
               All Day
             </Label>
             <div className="col-span-3 flex items-center space-x-2">
@@ -101,10 +115,19 @@ export const EventModal = ({
                 checked={currentEvent.allDay || false}
                 onCheckedChange={handleCheckboxChange}
               />
+              <Label
+                htmlFor="allDay"
+                className="text-sm font-medium cursor-pointer"
+              >
+                All day event
+              </Label>
             </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="description" className="text-right">
+          <div className="grid grid-cols-4 items-start gap-4">
+            <Label
+              htmlFor="description"
+              className="text-right text-sm font-medium text-gray-700 pt-2"
+            >
               Description
             </Label>
             <Textarea
@@ -112,27 +135,35 @@ export const EventModal = ({
               name="description"
               value={currentEvent.description || ""}
               onChange={handleInputChange}
-              className="col-span-3"
+              className="col-span-3 min-h-[100px]"
+              placeholder="Event description"
             />
           </div>
         </div>
-        <DialogFooter className="flex justify-between">
-          {isEditMode && currentEvent.userId === userId && (
-            <Button variant="destructive" onClick={onDelete}>
-              Delete
-            </Button>
-          )}
+        <DialogFooter className="flex justify-between border-t pt-4">
           <div>
+            {isEditMode && currentEvent.userId === userId && (
+              <Button variant="destructive" onClick={onDelete} size="sm">
+                Delete Event
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="mr-2"
+              size="sm"
             >
               Cancel
             </Button>
             {(!isEditMode || currentEvent.userId === userId) && (
-              <Button type="submit" onClick={onSave}>
-                Save
+              <Button
+                type="submit"
+                onClick={onSave}
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {isEditMode ? "Update Event" : "Create Event"}
               </Button>
             )}
           </div>
