@@ -10,7 +10,14 @@ const publicPaths = [
   "/api/auth/register",
   "/api/auth/refresh",
   "/api/auth/logout",
+  "/_next",
+  "/favicon.ico",
+  "/public",
 ];
+
+// API paths that should bypass middleware JWT verification
+// since they already have their own auth checks
+const apiPathsWithOwnAuth = ["/api/events", "/api/auth/me"];
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -20,7 +27,12 @@ export async function middleware(request: NextRequest) {
     (publicPath) => path === publicPath || path.startsWith(publicPath + "/")
   );
 
-  if (isPublicPath) {
+  // Check if the path is an API with its own auth
+  const isApiWithOwnAuth = apiPathsWithOwnAuth.some(
+    (apiPath) => path === apiPath || path.startsWith(apiPath + "/")
+  );
+
+  if (isPublicPath || isApiWithOwnAuth) {
     return NextResponse.next();
   }
 
@@ -29,6 +41,14 @@ export async function middleware(request: NextRequest) {
 
   // If no access token, redirect to login
   if (!accessToken) {
+    // If this is an API request, return 401 instead of redirecting
+    if (path.startsWith("/api/")) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
     const url = new URL("/login", request.url);
     url.searchParams.set("callbackUrl", encodeURI(request.url));
     return NextResponse.redirect(url);
@@ -44,6 +64,14 @@ export async function middleware(request: NextRequest) {
 
     return NextResponse.next();
   } catch (error) {
+    // If this is an API request, return 401 instead of redirecting
+    if (path.startsWith("/api/")) {
+      return NextResponse.json(
+        { error: "Invalid authentication token" },
+        { status: 401 }
+      );
+    }
+
     // If token is invalid, redirect to login
     const url = new URL("/login", request.url);
     url.searchParams.set("callbackUrl", encodeURI(request.url));

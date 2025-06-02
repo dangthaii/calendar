@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,11 +12,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useRegister } from "@/lib/hooks/useAuth";
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -25,55 +22,40 @@ export default function RegisterPage() {
     confirmPassword: "",
   });
 
+  const { mutate: register, isPending, error: registerError } = useRegister();
+  const [validationError, setValidationError] = useState("");
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear validation error when user types
+    if (validationError) {
+      setValidationError("");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
 
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
+      setValidationError("Passwords do not match");
       return;
     }
 
-    try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Registration failed");
-      }
-
-      // Store user data in localStorage
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-      }
-
-      // Redirect to dashboard on success
-      router.push("/dashboard");
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Registration failed");
-    } finally {
-      setIsLoading(false);
-    }
+    register({
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+    });
   };
+
+  // Format error message
+  const errorMessage = registerError
+    ? registerError instanceof Error
+      ? registerError.message
+      : String(registerError)
+    : validationError;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -88,9 +70,9 @@ export default function RegisterPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
+            {errorMessage && (
               <div className="p-3 rounded-md bg-destructive/15 text-destructive text-sm">
-                {error}
+                {errorMessage}
               </div>
             )}
             <div className="space-y-2">
@@ -152,8 +134,8 @@ export default function RegisterPage() {
                 onChange={handleChange}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Register"}
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? "Creating account..." : "Register"}
             </Button>
           </form>
         </CardContent>

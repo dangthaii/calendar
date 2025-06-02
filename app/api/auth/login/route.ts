@@ -43,13 +43,19 @@ export async function POST(request: NextRequest) {
       user.email
     );
 
+    console.log("Generated tokens:", {
+      accessToken: accessToken.substring(0, 20) + "...",
+    });
+
     // Create response
     const response = NextResponse.json({
       success: true,
+      accessToken,
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
+        accessToken: accessToken,
       },
     });
 

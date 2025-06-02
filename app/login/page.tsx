@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,15 +12,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useLogin } from "@/lib/hooks/useAuth";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
+  const { mutate: login, isPending, error: loginError } = useLogin();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -30,37 +29,15 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
-
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Login failed");
-      }
-
-      // Store user data in localStorage
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-      }
-
-      // Redirect to dashboard on success
-      router.push("/dashboard");
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Login failed");
-    } finally {
-      setIsLoading(false);
-    }
+    login(formData);
   };
+
+  // Format error message
+  const errorMessage = loginError
+    ? loginError instanceof Error
+      ? loginError.message
+      : String(loginError)
+    : "";
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -75,9 +52,9 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
+            {errorMessage && (
               <div className="p-3 rounded-md bg-destructive/15 text-destructive text-sm">
-                {error}
+                {errorMessage}
               </div>
             )}
             <div className="space-y-2">
@@ -118,8 +95,8 @@ export default function LoginPage() {
                 onChange={handleChange}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Log in"}
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? "Logging in..." : "Log in"}
             </Button>
           </form>
         </CardContent>
