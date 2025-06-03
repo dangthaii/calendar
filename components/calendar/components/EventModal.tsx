@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,10 +8,29 @@ import {
 } from "../../ui/dialog";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
-import { Label } from "../../ui/label";
 import { Textarea } from "../../ui/textarea";
-import { Checkbox } from "../../ui/checkbox";
 import { EventModalProps } from "../types";
+import { z } from "zod";
+import { useForm, SubmitHandler, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "../../ui/form";
+import { DateTimePicker24h } from "../../ui/date-time-picker";
+
+// Define the form schema using Zod
+const eventFormSchema = z.object({
+  title: z.string().min(1, { message: "Title is required" }),
+  start: z.date({ required_error: "Start time is required" }),
+  end: z.date({ required_error: "End time is required" }),
+  description: z.string().optional(),
+});
+
+type EventFormValues = z.infer<typeof eventFormSchema>;
 
 export const EventModal = ({
   isOpen,
@@ -23,26 +42,43 @@ export const EventModal = ({
   onDelete,
   userId,
 }: EventModalProps) => {
-  // Handle form input changes
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setCurrentEvent({ ...currentEvent, [name]: value });
-  };
+  // Initialize form with react-hook-form
+  const form = useForm<EventFormValues>({
+    resolver: zodResolver(eventFormSchema),
+    defaultValues: {
+      title: currentEvent.title || "",
+      start: currentEvent.start ? new Date(currentEvent.start) : undefined,
+      end: currentEvent.end ? new Date(currentEvent.end) : undefined,
+      description: currentEvent.description || "",
+    },
+  });
 
-  // Handle checkbox change
-  const handleCheckboxChange = (checked: boolean) => {
-    setCurrentEvent({ ...currentEvent, allDay: checked });
-  };
+  const values = form.watch();
 
-  // Format datetime for input fields
-  const formatDateTimeForInput = (dateString: string) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    // Check if date is valid
-    if (isNaN(date.getTime())) return "";
-    return date.toISOString().slice(0, 16);
+  // Update form values when currentEvent changes
+  useEffect(() => {
+    const obj = {
+      title: currentEvent.title || "",
+      start: currentEvent.start ? new Date(currentEvent.start) : undefined,
+      end: currentEvent.end ? new Date(currentEvent.end) : undefined,
+      description: currentEvent.description || "",
+    };
+    console.log("obj :", obj);
+
+    form.reset(obj);
+  }, [currentEvent, form]);
+
+  // Handle form submission
+  const onSubmit: SubmitHandler<EventFormValues> = (values) => {
+    console.log("values :", values);
+    const final = {
+      ...currentEvent,
+      ...values,
+      start: values.start.toISOString(),
+      end: values.end.toISOString(),
+    };
+
+    onSave(final);
   };
 
   return (
@@ -53,121 +89,115 @@ export const EventModal = ({
             {isEditMode ? "Edit Event" : "Create Event"}
           </DialogTitle>
         </DialogHeader>
-        <div className="grid gap-5 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label
-              htmlFor="title"
-              className="text-right text-sm font-medium text-gray-700"
-            >
-              Title
-            </Label>
-            <Input
-              id="title"
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="grid gap-5 py-4"
+          >
+            <FormField
+              control={form.control}
               name="title"
-              value={currentEvent.title || ""}
-              onChange={handleInputChange}
-              className="col-span-3"
-              placeholder="Event title"
+              render={({ field }) => (
+                <FormItem className="grid grid-cols-4 items-center gap-4">
+                  <FormLabel className="text-right text-sm font-medium text-gray-700">
+                    Title
+                  </FormLabel>
+                  <FormControl className="col-span-3">
+                    <Input placeholder="Event title" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label
-              htmlFor="start"
-              className="text-right text-sm font-medium text-gray-700"
-            >
-              Start
-            </Label>
-            <Input
-              id="start"
+
+            <FormField
+              control={form.control}
               name="start"
-              type="datetime-local"
-              value={formatDateTimeForInput(currentEvent.start || "")}
-              onChange={handleInputChange}
-              className="col-span-3"
+              render={({ field }) => (
+                <FormItem className="grid grid-cols-4 items-center gap-4">
+                  <FormLabel className="text-right text-sm font-medium text-gray-700">
+                    Start
+                  </FormLabel>
+                  <div className="col-span-3">
+                    <DateTimePicker24h
+                      date={field.value}
+                      setDate={field.onChange}
+                    />
+                  </div>
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label
-              htmlFor="end"
-              className="text-right text-sm font-medium text-gray-700"
-            >
-              End
-            </Label>
-            <Input
-              id="end"
+
+            <FormField
+              control={form.control}
               name="end"
-              type="datetime-local"
-              value={formatDateTimeForInput(currentEvent.end || "")}
-              onChange={handleInputChange}
-              className="col-span-3"
+              render={({ field }) => (
+                <FormItem className="grid grid-cols-4 items-center gap-4">
+                  <FormLabel className="text-right text-sm font-medium text-gray-700">
+                    End
+                  </FormLabel>
+                  <div className="col-span-3">
+                    <DateTimePicker24h
+                      date={field.value}
+                      setDate={field.onChange}
+                    />
+                  </div>
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label
-              htmlFor="allDay"
-              className="text-right text-sm font-medium text-gray-700"
-            >
-              All Day
-            </Label>
-            <div className="col-span-3 flex items-center space-x-2">
-              <Checkbox
-                id="allDay"
-                checked={currentEvent.allDay || false}
-                onCheckedChange={handleCheckboxChange}
-              />
-              <Label
-                htmlFor="allDay"
-                className="text-sm font-medium cursor-pointer"
-              >
-                All day event
-              </Label>
-            </div>
-          </div>
-          <div className="grid grid-cols-4 items-start gap-4">
-            <Label
-              htmlFor="description"
-              className="text-right text-sm font-medium text-gray-700 pt-2"
-            >
-              Description
-            </Label>
-            <Textarea
-              id="description"
+
+            <FormField
+              control={form.control}
               name="description"
-              value={currentEvent.description || ""}
-              onChange={handleInputChange}
-              className="col-span-3 min-h-[100px]"
-              placeholder="Event description"
+              render={({ field }) => (
+                <FormItem className="grid grid-cols-4 items-start gap-4">
+                  <FormLabel className="text-right text-sm font-medium text-gray-700 pt-2">
+                    Description
+                  </FormLabel>
+                  <FormControl className="col-span-3">
+                    <Textarea
+                      className="min-h-[100px]"
+                      placeholder="Event description"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
             />
-          </div>
-        </div>
-        <DialogFooter className="flex justify-between border-t pt-4">
-          <div>
-            {isEditMode && currentEvent.userId === userId && (
-              <Button variant="destructive" onClick={onDelete} size="sm">
-                Delete Event
-              </Button>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              size="sm"
-            >
-              Cancel
-            </Button>
-            {(!isEditMode || currentEvent.userId === userId) && (
-              <Button
-                type="submit"
-                onClick={onSave}
-                size="sm"
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {isEditMode ? "Update Event" : "Create Event"}
-              </Button>
-            )}
-          </div>
-        </DialogFooter>
+            <DialogFooter className="flex justify-between border-t pt-4">
+              <div>
+                {isEditMode && currentEvent.userId === userId && (
+                  <Button
+                    variant="destructive"
+                    onClick={onDelete}
+                    size="sm"
+                    type="button"
+                  >
+                    Delete Event
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  size="sm"
+                  type="button"
+                >
+                  Cancel
+                </Button>
+                {(!isEditMode || currentEvent.userId === userId) && (
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isEditMode ? "Update Event" : "Create Event"}
+                  </Button>
+                )}
+              </div>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

@@ -13,49 +13,69 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useRegister } from "@/lib/hooks/useAuth";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
-export default function RegisterPage() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
+// Define the form schema using Zod
+const registerFormSchema = z
+  .object({
+    name: z.string().min(2, {
+      message: "Name must be at least 2 characters.",
+    }),
+    email: z.string().email({
+      message: "Please enter a valid email address.",
+    }),
+    password: z.string().min(8, {
+      message: "Password must be at least 8 characters.",
+    }),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
   });
 
+// Infer the type from the schema
+type RegisterFormValues = z.infer<typeof registerFormSchema>;
+
+export default function RegisterPage() {
   const { mutate: register, isPending, error: registerError } = useRegister();
-  const [validationError, setValidationError] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear validation error when user types
-    if (validationError) {
-      setValidationError("");
-    }
-  };
+  // Initialize the form with react-hook-form and zod resolver
+  const form = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validate passwords match
-    if (formData.password !== formData.confirmPassword) {
-      setValidationError("Passwords do not match");
-      return;
-    }
-
+  // Handle form submission
+  const onSubmit = (values: RegisterFormValues) => {
     register({
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
+      name: values.name,
+      email: values.email,
+      password: values.password,
     });
   };
 
-  // Format error message
+  // Format error message from API
   const errorMessage = registerError
     ? registerError instanceof Error
       ? registerError.message
       : String(registerError)
-    : validationError;
+    : "";
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -69,75 +89,88 @@ export default function RegisterPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {errorMessage && (
-              <div className="p-3 rounded-md bg-destructive/15 text-destructive text-sm">
-                {errorMessage}
-              </div>
-            )}
-            <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium">
-                Name
-              </label>
-              <Input
-                id="name"
+          {errorMessage && (
+            <div className="p-3 mb-4 rounded-md bg-destructive/15 text-destructive text-sm">
+              {errorMessage}
+            </div>
+          )}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
                 name="name"
-                type="text"
-                placeholder="John Doe"
-                autoComplete="name"
-                value={formData.name}
-                onChange={handleChange}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="John Doe"
+                        autoComplete="name"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
-              <Input
-                id="email"
+              <FormField
+                control={form.control}
                 name="email"
-                type="email"
-                placeholder="name@example.com"
-                autoComplete="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="name@example.com"
+                        autoComplete="email"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">
-                Password
-              </label>
-              <Input
-                id="password"
+              <FormField
+                control={form.control}
                 name="password"
-                type="password"
-                placeholder="••••••••"
-                autoComplete="new-password"
-                required
-                value={formData.password}
-                onChange={handleChange}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        autoComplete="new-password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="text-sm font-medium">
-                Confirm Password
-              </label>
-              <Input
-                id="confirmPassword"
+              <FormField
+                control={form.control}
                 name="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                autoComplete="new-password"
-                required
-                value={formData.confirmPassword}
-                onChange={handleChange}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        autoComplete="new-password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? "Creating account..." : "Register"}
-            </Button>
-          </form>
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending ? "Creating account..." : "Register"}
+              </Button>
+            </form>
+          </Form>
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">

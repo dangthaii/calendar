@@ -24,7 +24,7 @@ export interface EventModalProps {
   currentEvent: Partial<Event>;
   setCurrentEvent: (event: Partial<Event>) => void;
   isEditMode: boolean;
-  onSave: () => void;
+  onSave: (event: Partial<Event>) => void;
   onDelete: () => void;
   userId: string;
 }

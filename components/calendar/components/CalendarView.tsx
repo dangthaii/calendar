@@ -73,8 +73,8 @@ export const CalendarView = ({
   };
 
   // Save event handler
-  const handleSaveEvent = async () => {
-    const success = await saveEvent(currentEvent, isEditMode);
+  const handleSaveEvent = async (event: Partial<Event>) => {
+    const success = await saveEvent(event, isEditMode);
     if (success) {
       setIsModalOpen(false);
     }

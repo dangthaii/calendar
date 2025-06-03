@@ -6,6 +6,8 @@ import Calendar from "@/components/Calendar";
 import { Toaster } from "@/components/ui/toaster";
 import { useCurrentUser, useLogout } from "@/lib/hooks/useAuth";
 import "./styles.css";
+import { DateTimePicker24h } from "@/components/ui/date-time-picker";
+import { useState } from "react";
 
 export default function DashboardPage() {
   const router = useRouter();

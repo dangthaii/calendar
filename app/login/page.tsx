@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,23 +12,46 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useLogin } from "@/lib/hooks/useAuth";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+// Define the form schema using Zod
+const loginFormSchema = z.object({
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+  password: z.string().min(1, {
+    message: "Password is required.",
+  }),
+});
+
+// Infer the type from the schema
+type LoginFormValues = z.infer<typeof loginFormSchema>;
 
 export default function LoginPage() {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-
   const { mutate: login, isPending, error: loginError } = useLogin();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  // Initialize the form with react-hook-form and zod resolver
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginFormSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    login(formData);
+  // Handle form submission
+  const onSubmit = (values: LoginFormValues) => {
+    login(values);
   };
 
   // Format error message
@@ -51,54 +73,61 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {errorMessage && (
-              <div className="p-3 rounded-md bg-destructive/15 text-destructive text-sm">
-                {errorMessage}
-              </div>
-            )}
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
-              <Input
-                id="email"
+          {errorMessage && (
+            <div className="p-3 mb-4 rounded-md bg-destructive/15 text-destructive text-sm">
+              {errorMessage}
+            </div>
+          )}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
                 name="email"
-                type="email"
-                placeholder="name@example.com"
-                autoComplete="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="name@example.com"
+                        autoComplete="email"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label htmlFor="password" className="text-sm font-medium">
-                  Password
-                </label>
-                <Link
-                  href="/forgot-password"
-                  className="text-sm text-primary hover:underline"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <Input
-                id="password"
+              <FormField
+                control={form.control}
                 name="password"
-                type="password"
-                placeholder="••••••••"
-                autoComplete="current-password"
-                required
-                value={formData.password}
-                onChange={handleChange}
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Password</FormLabel>
+                      <Link
+                        href="/forgot-password"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        Forgot password?
+                      </Link>
+                    </div>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        autoComplete="current-password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? "Logging in..." : "Log in"}
-            </Button>
-          </form>
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending ? "Logging in..." : "Log in"}
+              </Button>
+            </form>
+          </Form>
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">

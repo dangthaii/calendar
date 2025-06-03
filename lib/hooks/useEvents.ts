@@ -113,6 +113,8 @@ export function useEvents() {
     currentEvent: Partial<Event>,
     isEditMode: boolean
   ) => {
+    console.log("currentEvent :", currentEvent);
+
     try {
       if (!currentEvent.title || !currentEvent.start || !currentEvent.end) {
         toast({
